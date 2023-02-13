@@ -2,6 +2,9 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    --bg-color: #d9f99d;
+    --popup-color: #84cc16;
+    --board-color: #ecfccb;
 }
 
 
@@ -9,6 +12,24 @@ body, html{
     width: 100%;
     height: 100%;
     font-family: 'Roboto', sans-serif;
+    background-color: var(--bg-color);
+}
+
+.infoPopup{
+    display: block;
+    position: fixed;
+    width: min(500px, 40vw);
+    height: min(500px, 30vh);
+    margin-left: 34vw;
+    margin-top: 20vh;
+    box-shadow: 0 0 150px green;
+    background-color: var(--popup-color);
+}
+
+.popupBox{
+    width: 100%;
+    height: 100%;
+    border: 1px solid green;
 }
 
 .gameBoard{
@@ -21,7 +42,7 @@ body, html{
 }
 
 .board{
-
+    background-color: var(--board-color);
 }
 
 .board>div{
