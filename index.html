@@ -9,15 +9,23 @@
 <body>
     <section id="infoPopup">
         <div class="popupBox">
-            <label for="player1Name">Enter first player's name:</label><br>
-            <input type="text" id="player1Name" name="Pl1Name" maxlength="20" value="Player 1"><br><br>
-            <label for="player1Symbol">Enter first player's symbol:</label><br>
-            <input type="text" id="player1Symbol" name="Pl1Symbol" maxlength="1" value="X"><br><br>
-            <label for="player2Name">Enter second player's name:</label><br>
-            <input type="text" id="player2Name" name="Pl1Name" maxlength="20" value="Player 2"><br><br>
-            <label for="player2Symbol">Enter second player's symbol:</label><br>
-            <input type="text" id="player2Symbol" name="Pl1Symbol" maxlength="1" value="O"><br><br>
-            <button type="button" id="sentInfoData" onclick="gameStarter.collectData()">test</button>
+            <div>
+                <label for="player1Name">Enter first player's name:</label><br>
+                <input type="text" id="player1Name" name="Pl1Name" maxlength="20" value="Player 1">
+            </div>
+            <div>
+                <label for="player2Name">Enter second player's name:</label><br>
+                <input type="text" id="player2Name" name="Pl1Name" maxlength="20" value="Player 2">
+            </div>
+            <div>
+                <label for="player1Symbol">Enter first player's symbol:</label><br>
+                <input type="text" id="player1Symbol" name="Pl1Symbol" maxlength="1" value="X">
+            </div>
+            <div>
+                <label for="player2Symbol">Enter second player's symbol:</label><br>
+                <input type="text" id="player2Symbol" name="Pl1Symbol" maxlength="1" value="O">
+            </div>
+            <button type="button" id="sentInfoData">test</button>
         </div>
     </section>
     <section class="gameBoard">
@@ -36,6 +44,10 @@
             <div id="8" class="boardFile"></div>
             <div id="9" class="boardFile"></div>
         </div>
+    </section>
+    <section>
+        <div><p id="winnerAnnouncement"></p></div>
+        <button type="button" onclick="gameLogic.reset()" class="RESETbutton"></button>
     </section>
 </body>
 </html>
