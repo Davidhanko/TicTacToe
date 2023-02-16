@@ -1,4 +1,4 @@
-//Code could be formated better, will get into it after I finish learning.
+//Code could be formated better. AI can be adjusted to also focus on winning, and not just blocking.
 
 let lastMove,
   playerTurn,
@@ -6,7 +6,7 @@ let lastMove,
   winner,
   gameOver = false,
   useAI = true,
-  AIgoesFirst = true;
+  AIgoesFirst = false;
 const button = document.getElementById("sentInfoData");
 const winnerAnn = document.getElementById("winnerAnnouncement");
 
@@ -35,7 +35,12 @@ const player = (name, symbol) => {
 
 const displayController = (() => {
   let board = gameBoard.getBoard();
-
+  const displayModule = (i, j, symbol, element) => {
+    gameBoard.setBoard(i, j, symbol);
+    showSymbol(symbol, element);
+    gameLogic.checkWinner();
+    gameLogic.PlayerTurnFunc();
+  };
   const canBePlaced = (i, j) => {
     return gameBoard.htmlBoard[i].children[j].textContent === "";
   };
@@ -46,14 +51,18 @@ const displayController = (() => {
           "click",
           function display(e) {
             if (gameOver === false && canBePlaced(i, j)) {
-              if (useAI === true && playerTurn === playerArray[1].getSymbol()) {
-                const element = e.target;
-                element.removeEventListener("click", display);
-                const symbol = gameLogic.displaySymbol();
-                gameBoard.setBoard(i, j, symbol);
-                showSymbol(symbol, element);
-                gameLogic.checkWinner();
-                gameLogic.PlayerTurnFunc();
+              {
+                if (AIgoesFirst && playerArray[1].getSymbol()) {
+                  const element = e.target;
+                  element.removeEventListener("click", display);
+                  const symbol = gameLogic.displaySymbol();
+                  displayModule(i, j, symbol, element);
+                } else if (!AIgoesFirst && playerArray[0].getSymbol()) {
+                  const element = e.target;
+                  element.removeEventListener("click", display);
+                  const symbol = gameLogic.displaySymbol();
+                  displayModule(i, j, symbol, element);
+                }
               }
             }
           }
@@ -81,17 +90,15 @@ const displayController = (() => {
 })();
 
 const gameStarter = (() => {
-  const start = () => {
-    displayController.displayBoard();
-  };
   const collectData = () => {
     document.getElementById("infoPopup").style.display = "none";
+    displayController.displayBoard();
     PlayerData();
-    if (useAI) {
+    if (useAI && AIgoesFirst) {
       AI.startAI();
     }
   };
-  return { start, collectData };
+  return { collectData };
 })();
 
 const gameLogic = (() => {
@@ -190,6 +197,9 @@ const gameLogic = (() => {
     winnerAnn.textContent = "";
     displayController.resetBoard();
     displayController.displayBoard();
+    if (useAI && AIgoesFirst) {
+      AI.startAI();
+    }
   };
 
   return {
@@ -208,10 +218,13 @@ const PlayerTurnSystem = (() => {
     if (lastMove === playerArray[1].getSymbol()) {
       lastMove = playerArray[0].getSymbol();
       playerTurn = playerArray[1].getSymbol();
+      if (useAI === true && AIgoesFirst === false) {
+        AI.startAI();
+      }
     } else {
       lastMove = playerArray[1].getSymbol();
       playerTurn = playerArray[0].getSymbol();
-      if (useAI === true) {
+      if (useAI === true && AIgoesFirst === true) {
         AI.startAI();
       }
     }
@@ -228,6 +241,8 @@ function PlayerData() {
     document.getElementById("player2Name").value,
     document.getElementById("player2Symbol").value
   );
+  useAI = document.getElementById("buttonForEnablingAI").checked;
+  AIgoesFirst = document.getElementById("AIfirst").checked;
   playerArray = [player1, player2];
   gameLogic.assignDataLastMove(playerArray);
   gameLogic.assignDataPlayerMove(playerArray);
@@ -235,12 +250,14 @@ function PlayerData() {
 }
 
 const AI = (() => {
-  let htmlBoard = gameBoard.htmlBoard;
-  let friendlySymbol;
-  let opponentSymbol;
-  let hasAISymbols = false;
-  let board = gameBoard.getBoard();
-  let blockMove;
+  let htmlBoard = gameBoard.htmlBoard,
+    friendlySymbol,
+    opponentSymbol,
+    hasAISymbols = false,
+    board = gameBoard.getBoard(),
+    blockMove,
+    blockMoveCol,
+    blockMoveDia;
 
   const move = (i, j, symbol) => {
     if (htmlBoard[i].children[j].textContent === "") {
@@ -251,41 +268,128 @@ const AI = (() => {
     } else startAI();
   };
   const getSymbols = () => {
-    friendlySymbol = playerArray[0].getSymbol();
-    opponentSymbol = playerArray[1].getSymbol();
+    if (AIgoesFirst === true) {
+      friendlySymbol = playerArray[0].getSymbol();
+      opponentSymbol = playerArray[1].getSymbol();
+    } else {
+      friendlySymbol = playerArray[1].getSymbol();
+      opponentSymbol = playerArray[0].getSymbol();
+    }
     hasAISymbols = true;
   };
-  const countRowCycles = (k) => {
+  const countCycles = (k, type) => {
     let blockingMove;
     let counter = 0;
-    for (let i = 0; i < board.length; i++) {
-      if (htmlBoard[i].children[k].textContent === opponentSymbol) {
-        counter++;
+    if (type === "R") {
+      for (let i = 0; i < board.length; i++) {
+        if (htmlBoard[i].children[k].textContent === opponentSymbol) {
+          counter++;
+        }
+        if (counter === 2) {
+          blockingMove = findEmptyTile(k, "R");
+          return blockingMove;
+        } else if (i === 2) {
+          return false;
+        }
       }
-      if (counter === 2) {
-        blockingMove = findEmptyTile(k, "R");
-        return blockingMove;
-      } else if (i === 2) {
-        return false;
+    } else if (type === "C") {
+      for (let i = 0; i < board.length; i++) {
+        if (htmlBoard[k].children[i].textContent === opponentSymbol) {
+          counter++;
+        }
+        if (counter === 2) {
+          blockingMove = findEmptyTile(k, "C");
+          return blockingMove;
+        } else if (i === 2) {
+          return false;
+        }
+      }
+    } else if (type === "D") {
+      if (
+        htmlBoard[0].children[0].textContent === opponentSymbol &&
+        htmlBoard[1].children[1].textContent === opponentSymbol &&
+        htmlBoard[2].children[2].textContent === ""
+      ) {
+        return "22";
+      } else if (
+        htmlBoard[0].children[0].textContent === opponentSymbol &&
+        htmlBoard[1].children[1].textContent === "" &&
+        htmlBoard[2].children[2].textContent === opponentSymbol
+      ) {
+        return "11";
+      } else if (
+        htmlBoard[0].children[0].textContent === "" &&
+        htmlBoard[1].children[1].textContent === opponentSymbol &&
+        htmlBoard[2].children[2].textContent === opponentSymbol
+      ) {
+        return "00";
+      } else if (
+        htmlBoard[2].children[0].textContent === opponentSymbol &&
+        htmlBoard[1].children[1].textContent === opponentSymbol &&
+        htmlBoard[0].children[2].textContent === ""
+      ) {
+        return "02";
+      } else if (
+        htmlBoard[2].children[0].textContent === opponentSymbol &&
+        htmlBoard[1].children[1].textContent === "" &&
+        htmlBoard[0].children[2].textContent === opponentSymbol
+      ) {
+        return "11";
+      } else if (
+        htmlBoard[2].children[0].textContent === "" &&
+        htmlBoard[1].children[1].textContent === opponentSymbol &&
+        htmlBoard[0].children[2].textContent === opponentSymbol
+      ) {
+        return "20";
       }
     }
   };
   const countRow = () => {
     let block;
-    block = countRowCycles(0);
+    block = countCycles(0, "R");
     if (!block) {
-      block = countRowCycles(1);
+      block = countCycles(1, "R");
     }
     if (!block) {
-      block = countRowCycles(2);
+      block = countCycles(2, "R");
     }
-
     switch (block) {
       case "NO":
         blockMove = "NO";
         break;
       default:
         blockMove = block;
+        break;
+    }
+  };
+  const countCol = () => {
+    let block;
+    block = countCycles(0, "C");
+    if (!block) {
+      block = countCycles(1, "C");
+    }
+    if (!block) {
+      block = countCycles(2, "C");
+    }
+    switch (block) {
+      case "NO":
+        blockMoveCol = "NO";
+        break;
+      default:
+        blockMoveCol = block;
+        break;
+    }
+  };
+
+  const countDia = () => {
+    let block;
+    block = countCycles(0, "D");
+    switch (block) {
+      case "NO":
+        blockMoveDia = "NO";
+        break;
+      default:
+        blockMoveDia = block;
         break;
     }
   };
@@ -301,6 +405,21 @@ const AI = (() => {
           ) {
             let holder = `${i}${j}`;
             holder = holder.substring(1);
+            return holder;
+          } else return `${i}${j}`;
+        }
+      }
+    } else if (type === "C") {
+      for (let i = 0; i < board.length; i++) {
+        if (htmlBoard[j].children[i].textContent === "") {
+          if (
+            `${i}${j}` === "00" ||
+            `${i}${j}` === "01" ||
+            `${i}${j}` === "02"
+          ) {
+            let holder = `${i}${j}`;
+            holder = holder.substring(1);
+            return holder;
           } else return `${i}${j}`;
         }
       }
@@ -314,44 +433,100 @@ const AI = (() => {
   };
   const AIMovesSet = () => {
     countRow();
-    if (blockMove !== "NO" && blockMove !== undefined && blockMove !== false) {
-      console.log(blockMove);
-      switch (blockMove) {
-        case "0":
+    countCol();
+    countDia();
+    if (
+      blockMoveDia !== "NO" &&
+      blockMoveDia !== undefined &&
+      blockMoveDia !== false
+    ) {
+      switch (blockMoveDia) {
+        case "00":
           move(0, 0, friendlySymbol);
-          console.log("BLOCK");
-          break;
-        case "10":
-          move(1, 0, friendlySymbol);
-          console.log("BLOCK");
           break;
         case "20":
           move(2, 0, friendlySymbol);
-          console.log("BLOCK");
           break;
-        case "1":
-          move(0, 1, friendlySymbol);
-          console.log("BLOCK");
-          break;
-        case "11":
-          move(1, 1, friendlySymbol);
-          console.log("BLOCK");
-          break;
-        case "21":
-          move(2, 1, friendlySymbol);
-          console.log("BLOCK");
-          break;
-        case "2":
+        case "02":
           move(0, 2, friendlySymbol);
-          console.log("BLOCK");
-          break;
-        case "12":
-          move(1, 2, friendlySymbol);
-          console.log("BLOCK");
           break;
         case "22":
           move(2, 2, friendlySymbol);
-          console.log("BLOCK");
+          break;
+        case "11":
+          move(1, 1, friendlySymbol);
+          break;
+        default:
+          break;
+      }
+    } else if (
+      blockMoveCol !== "NO" &&
+      blockMoveCol !== undefined &&
+      blockMoveCol !== false
+    ) {
+      switch (blockMoveCol) {
+        case "0":
+          move(0, 0, friendlySymbol);
+          break;
+        case "10":
+          move(0, 1, friendlySymbol);
+          break;
+        case "20":
+          move(0, 2, friendlySymbol);
+          break;
+        case "1":
+          move(1, 0, friendlySymbol);
+          break;
+        case "11":
+          move(1, 1, friendlySymbol);
+          break;
+        case "21":
+          move(1, 2, friendlySymbol);
+          break;
+        case "2":
+          move(2, 0, friendlySymbol);
+          break;
+        case "12":
+          move(2, 1, friendlySymbol);
+          break;
+        case "22":
+          move(2, 2, friendlySymbol);
+          break;
+        default:
+          break;
+      }
+    } else if (
+      blockMove !== "NO" &&
+      blockMove !== undefined &&
+      blockMove !== false
+    ) {
+      switch (blockMove) {
+        case "0":
+          move(0, 0, friendlySymbol);
+          break;
+        case "10":
+          move(1, 0, friendlySymbol);
+          break;
+        case "20":
+          move(2, 0, friendlySymbol);
+          break;
+        case "1":
+          move(0, 1, friendlySymbol);
+          break;
+        case "11":
+          move(1, 1, friendlySymbol);
+          break;
+        case "21":
+          move(2, 1, friendlySymbol);
+          break;
+        case "2":
+          move(0, 2, friendlySymbol);
+          break;
+        case "12":
+          move(1, 2, friendlySymbol);
+          break;
+        case "22":
+          move(2, 2, friendlySymbol);
           break;
         default:
           break;
@@ -409,12 +584,11 @@ const AI = (() => {
         if (htmlBoard[1].children[1].textContent === "") {
           move(1, 1, friendlySymbol);
         } else AIMovesSet();
-      }
+      } else AIMovesSet();
     }
   };
 
   return { startAI };
 })();
 
-gameStarter.start();
 button.addEventListener("click", gameStarter.collectData);

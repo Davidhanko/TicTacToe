@@ -25,7 +25,15 @@
                 <label for="player2Symbol">Enter second player's symbol:</label><br>
                 <input type="text" id="player2Symbol" name="Pl1Symbol" maxlength="1" value="O">
             </div>
-            <button type="button" id="sentInfoData">test</button>
+            <div>
+                <label for="buttonForEnablingAI">Enable AI?</label>
+                <input type="checkbox" id="buttonForEnablingAI" name="EnableAI" value=true>
+            </div>
+                <div>
+                <label for="AIfirst">Does AI go first?</label>
+                <input type="checkbox" id="AIfirst" name="firstAI" value=true checked>
+            </div>
+            <button type="button" id="sentInfoData">PLAY</button>
         </div>
     </section>
     <section class="gameBoard">
@@ -45,9 +53,9 @@
             <div id="9" class="boardFile"></div>
         </div>
     </section>
-    <section>
-        <div><p id="winnerAnnouncement"></p></div>
-        <button type="button" onclick="gameLogic.reset()" class="RESETbutton"></button>
+    <section class="over">
+        <p id="winnerAnnouncement"></p>
+        <button type="button" onclick="gameLogic.reset()" class="RESETbutton">Restart</button>
     </section>
 </body>
 </html>
