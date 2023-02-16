@@ -4,11 +4,58 @@
     <meta charset="UTF-8">
     <title>Tic Tac Toe</title>
     <link rel="stylesheet" href="style.css">
-    <script src="js.js"></script>
+    <script src="js.js" defer></script>
 </head>
 <body>
-  <div>
-
-  </div>
+    <section id="infoPopup">
+        <div class="popupBox">
+            <div>
+                <label for="player1Name">Enter first player's name:</label><br>
+                <input type="text" id="player1Name" name="Pl1Name" maxlength="20" value="Player 1">
+            </div>
+            <div>
+                <label for="player2Name">Enter second player's name:</label><br>
+                <input type="text" id="player2Name" name="Pl1Name" maxlength="20" value="Player 2">
+            </div>
+            <div>
+                <label for="player1Symbol">Enter first player's symbol:</label><br>
+                <input type="text" id="player1Symbol" name="Pl1Symbol" maxlength="1" value="X">
+            </div>
+            <div>
+                <label for="player2Symbol">Enter second player's symbol:</label><br>
+                <input type="text" id="player2Symbol" name="Pl1Symbol" maxlength="1" value="O">
+            </div>
+            <div>
+                <label for="buttonForEnablingAI">Enable AI?</label>
+                <input type="checkbox" id="buttonForEnablingAI" name="EnableAI" value=true>
+            </div>
+                <div>
+                <label for="AIfirst">Does AI go first?</label>
+                <input type="checkbox" id="AIfirst" name="firstAI" value=true checked>
+            </div>
+            <button type="button" id="sentInfoData">PLAY</button>
+        </div>
+    </section>
+    <section class="gameBoard">
+        <div class="board">
+            <div id="1" class="boardFile"></div>
+            <div id="2" class="boardFile"></div>
+            <div id="3" class="boardFile"></div>
+        </div>
+        <div class="board">
+            <div id="4" class="boardFile"></div>
+            <div id="5" class="boardFile"></div>
+            <div id="6" class="boardFile"></div>
+        </div>
+        <div class="board">
+            <div id="7" class="boardFile"></div>
+            <div id="8" class="boardFile"></div>
+            <div id="9" class="boardFile"></div>
+        </div>
+    </section>
+    <section class="over">
+        <p id="winnerAnnouncement"></p>
+        <button type="button" onclick="gameLogic.reset()" class="RESETbutton">Restart</button>
+    </section>
 </body>
 </html>
