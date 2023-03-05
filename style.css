@@ -70,15 +70,15 @@ body, html{
     /*padding-top: 5%;*/
 }
 
-.board{
+.gameBoard{
     background-color: var(--board-color);
 }
 
-.board>div{
+.gameBoard>div{
     border: 1px solid #000;
     width: 150px;
     height: 150px;
-    display: flex;
+    display:    flex;
     justify-content: center;
     align-items: center;
 }

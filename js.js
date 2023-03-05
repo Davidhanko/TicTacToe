@@ -1,594 +1,320 @@
 //Code could be formated better. AI can be adjusted to also focus on winning, and not just blocking.
+//Create game manager
 
-let lastMove,
-  playerTurn,
-  playerArray,
-  winner,
-  gameOver = false,
-  useAI = true,
-  AIgoesFirst = false;
-const button = document.getElementById("sentInfoData");
-const winnerAnn = document.getElementById("winnerAnnouncement");
+//Game Manager
+class GameManager {
+  constructor() {
+    this.players = [];
+  }
 
-const gameBoard = (() => {
-  const board = [
-    ["", "", ""],
-    ["", "", ""],
-    ["", "", ""],
-  ];
-  const htmlBoard = document.getElementsByClassName("board");
-  const getBoard = () => board;
-  const setBoard = (index, index2, value) => (board[index][index2] = value);
-  return { htmlBoard, getBoard, setBoard };
-})();
+  //Start game
+  startGame() {
+    //Create game logic
+    this.gameLogic = new GameLogic();
 
-const player = (name, symbol) => {
-  const getName = () => {
-    return name;
-  };
-  const getSymbol = () => {
-    return symbol;
-  };
+    //Create game board
+    this.gameBoard = new GameBoard();
 
-  return { getName, getSymbol };
-};
+    //Create player 1 and get his name and symbol
+    let name = document.getElementById("player1Name").value;
+    let symbol = document.getElementById("player1Symbol").value;
 
-const displayController = (() => {
-  let board = gameBoard.getBoard();
-  const displayModule = (i, j, symbol, element) => {
-    gameBoard.setBoard(i, j, symbol);
-    showSymbol(symbol, element);
-    gameLogic.checkWinner();
-    gameLogic.PlayerTurnFunc();
-  };
-  const canBePlaced = (i, j) => {
-    return gameBoard.htmlBoard[i].children[j].textContent === "";
-  };
-  const displayBoard = () => {
-    for (let i = 0; i < board.length; i++) {
-      for (let j = 0; j < board[i].length; j++) {
-        gameBoard.htmlBoard[i].children[j].addEventListener(
-          "click",
-          function display(e) {
-            if (gameOver === false && canBePlaced(i, j)) {
-              {
-                if (AIgoesFirst && playerArray[1].getSymbol()) {
-                  const element = e.target;
-                  element.removeEventListener("click", display);
-                  const symbol = gameLogic.displaySymbol();
-                  displayModule(i, j, symbol, element);
-                } else if (!AIgoesFirst && playerArray[0].getSymbol()) {
-                  const element = e.target;
-                  element.removeEventListener("click", display);
-                  const symbol = gameLogic.displaySymbol();
-                  displayModule(i, j, symbol, element);
-                }
-              }
-            }
-          }
-        );
-      }
+    let player1 = new Player(name, symbol);
+    this.addPlayer(player1);
+
+    //Check if we should play with AI or not
+    let ai = document.getElementById("buttonForEnablingAI").checked;
+
+    if (ai) {
+      //Create AI
+      let ai = new AI("AI", "O");
+      this.addPlayer(ai);
+    } else {
+      //Create player 2 and get his name and symbol
+      let name = document.getElementById("player2Name").value;
+      let symbol = document.getElementById("player2Symbol").value;
+
+      let player2 = new Player(name, symbol);
+      this.addPlayer(player2);
     }
-  };
-  const resetBoard = () => {
-    let board = gameBoard.getBoard();
-    for (let i = 0; i < board.length; i++) {
-      for (let j = 0; j < board[i].length; j++) {
-        let old_element = gameBoard.htmlBoard[i].children[j];
-        gameBoard.setBoard(i, j, "");
-        gameBoard.htmlBoard[i].children[j].textContent = "";
-        let new_element = old_element.cloneNode(false);
-        old_element.parentNode.replaceChild(new_element, old_element);
-      }
-    }
-  };
 
-  const showSymbol = (symbol, element) => {
-    element.textContent = symbol;
-  };
-  return { displayBoard, resetBoard };
-})();
-
-const gameStarter = (() => {
-  const collectData = () => {
+    //Hide start game menu
     document.getElementById("infoPopup").style.display = "none";
-    displayController.displayBoard();
-    PlayerData();
-    if (useAI && AIgoesFirst) {
-      AI.startAI();
-    }
-  };
-  return { collectData };
-})();
+  }
+  addPlayer(player) {
+    this.players.push(player);
+  }
+  getPlayers() {
+    return this.players;
+  }
 
-const gameLogic = (() => {
-  let counter = 0;
-  const removeListeners = () => {
-    gameOver = true;
-  };
+  //Get game board
+  getGameBoard() {
+    return this.gameBoard;
+  }
 
-  const assignDataPlayerMove = (playerArray) => {
-    playerTurn = playerArray[0].getSymbol();
-    return playerTurn;
-  };
-  const assignDataLastMove = (playerArray) => {
-    lastMove = playerArray[1].getSymbol();
-    return lastMove;
-  };
-  const PlayerTurnFunc = () => {
-    PlayerTurnSystem.checkAndChangePlayer();
-  };
-  const displaySymbol = () => {
-    if (playerTurn === playerArray[0].getSymbol()) {
-      return playerArray[0].getSymbol();
-    } else {
-      return playerArray[1].getSymbol();
-    }
-  };
-  const checkWinner = () => {
-    let board = gameBoard.getBoard();
-    winner = "";
-    if (boardIsFull() === 9) {
-      winner = "tie";
-    }
-    for (let i = 0; i < board.length; i++) {
-      if (
-        board[i][0] === board[i][1] &&
-        board[i][1] === board[i][2] &&
-        board[i][0] !== ""
-      ) {
-        winner = board[i][0];
-      }
-    }
-    for (let i = 0; i < board.length; i++) {
-      if (
-        board[0][i] === board[1][i] &&
-        board[1][i] === board[2][i] &&
-        board[0][i] !== ""
-      ) {
-        winner = board[0][i];
-      }
-    }
-    if (
-      board[0][0] === board[1][1] &&
-      board[1][1] === board[2][2] &&
-      board[0][0] !== ""
-    ) {
-      winner = board[0][0];
-    }
-    if (
-      board[0][2] === board[1][1] &&
-      board[1][1] === board[2][0] &&
-      board[0][2] !== ""
-    ) {
-      winner = board[0][2];
-    }
-    gameEnd(winner);
-  };
+  //Get game logic
+  getGameLogic() {
+    return this.gameLogic;
+  }
 
-  const boardIsFull = () => {
-    counter++;
-    return counter;
-  };
+  //Reset game
+  resetGame() {
+    this.gameBoard.resetGame();
+    this.gameLogic.resetGame();
+  }
 
-  const gameEnd = () => {
-    switch (winner) {
-      case "tie":
-        winnerAnn.textContent = "The game is a tie!";
-        removeListeners();
-        break;
-      case playerArray[0].getSymbol():
-        winnerAnn.textContent = `${playerArray[0].getName()} is victorious!`;
-        removeListeners();
-        break;
-      case playerArray[1].getSymbol():
-        winnerAnn.textContent = `${playerArray[1].getName()} is victorious!`;
-        removeListeners();
-        break;
-    }
-  };
+  //Game over
+  gameOver(winner) {
+    //Show game over menu
+    document.getElementById("winnerAnnouncement").textContent = "";
 
-  const reset = () => {
-    gameOver = false;
-    counter = 0;
-    assignDataLastMove(playerArray);
-    assignDataPlayerMove(playerArray);
-    winner = "";
-    winnerAnn.textContent = "";
-    displayController.resetBoard();
-    displayController.displayBoard();
-    if (useAI && AIgoesFirst) {
-      AI.startAI();
-    }
-  };
-
-  return {
-    PlayerTurnFunc,
-    displaySymbol,
-    checkWinner,
-    boardIsFull,
-    assignDataLastMove,
-    assignDataPlayerMove,
-    reset,
-  };
-})();
-
-const PlayerTurnSystem = (() => {
-  const checkAndChangePlayer = () => {
-    if (lastMove === playerArray[1].getSymbol()) {
-      lastMove = playerArray[0].getSymbol();
-      playerTurn = playerArray[1].getSymbol();
-      if (useAI === true && AIgoesFirst === false) {
-        AI.startAI();
-      }
-    } else {
-      lastMove = playerArray[1].getSymbol();
-      playerTurn = playerArray[0].getSymbol();
-      if (useAI === true && AIgoesFirst === true) {
-        AI.startAI();
-      }
-    }
-  };
-  return { checkAndChangePlayer };
-})();
-
-function PlayerData() {
-  const player1 = player(
-    document.getElementById("player1Name").value,
-    document.getElementById("player1Symbol").value
-  );
-  const player2 = player(
-    document.getElementById("player2Name").value,
-    document.getElementById("player2Symbol").value
-  );
-  useAI = document.getElementById("buttonForEnablingAI").checked;
-  AIgoesFirst = document.getElementById("AIfirst").checked;
-  playerArray = [player1, player2];
-  gameLogic.assignDataLastMove(playerArray);
-  gameLogic.assignDataPlayerMove(playerArray);
-  return playerArray;
+    //Set winner text
+    document.getElementById("winnerAnnouncement").textContent =
+      winner.getName() + " won!";
+  }
 }
 
-const AI = (() => {
-  let htmlBoard = gameBoard.htmlBoard,
-    friendlySymbol,
-    opponentSymbol,
-    hasAISymbols = false,
-    board = gameBoard.getBoard(),
-    blockMove,
-    blockMoveCol,
-    blockMoveDia;
+//Game Logic
+class GameLogic {
+  constructor() {
+    //Current player index
+    this.currentPlayer = 0;
 
-  const move = (i, j, symbol) => {
-    if (htmlBoard[i].children[j].textContent === "") {
-      gameBoard.setBoard(i, j, symbol);
-      htmlBoard[i].children[j].textContent = symbol;
-      gameLogic.checkWinner();
-      PlayerTurnSystem.checkAndChangePlayer();
-    } else startAI();
-  };
-  const getSymbols = () => {
-    if (AIgoesFirst === true) {
-      friendlySymbol = playerArray[0].getSymbol();
-      opponentSymbol = playerArray[1].getSymbol();
-    } else {
-      friendlySymbol = playerArray[1].getSymbol();
-      opponentSymbol = playerArray[0].getSymbol();
+    //Game over
+    this.gameOver = false;
+  }
+
+  //Handle turn
+  handleTurn(i, j) {
+    //Check if game is over
+    if (this.gameOver) {
+      return;
     }
-    hasAISymbols = true;
-  };
-  const countCycles = (k, type) => {
-    let blockingMove;
-    let counter = 0;
-    if (type === "R") {
-      for (let i = 0; i < board.length; i++) {
-        if (htmlBoard[i].children[k].textContent === opponentSymbol) {
-          counter++;
-        }
-        if (counter === 2) {
-          blockingMove = findEmptyTile(k, "R");
-          return blockingMove;
-        } else if (i === 2) {
-          return false;
-        }
-      }
-    } else if (type === "C") {
-      for (let i = 0; i < board.length; i++) {
-        if (htmlBoard[k].children[i].textContent === opponentSymbol) {
-          counter++;
-        }
-        if (counter === 2) {
-          blockingMove = findEmptyTile(k, "C");
-          return blockingMove;
-        } else if (i === 2) {
-          return false;
-        }
-      }
-    } else if (type === "D") {
+
+    //Get current player
+    let currentPlayer = gameManager.getPlayers()[this.currentPlayer];
+
+    //Get cell
+    let cell = gameManager.getGameBoard().getCell(i, j);
+
+    //Set symbol on cell
+    cell.setSymbol(currentPlayer.getSymbol());
+
+    //Set cell text to symbol
+    cell.cellElement.innerHTML = currentPlayer.getSymbol();
+
+    //Check if game is over
+    this.checkIfCanWin();
+
+    //Check if game is over
+    if (!this.gameOver) {
+      //Change player
+      this.changePlayer();
+    }
+  }
+
+  //On click event
+  onClick(cell) {
+    //Check if cell is empty
+    if (cell.symbol == null) {
+      this.handleTurn(cell.i, cell.j);
+    }
+  }
+
+  changePlayer() {
+    //Change player
+    this.currentPlayer = this.currentPlayer === 0 ? 1 : 0;
+  }
+
+  //Reset game
+  resetGame() {
+    this.winner = null;
+    this.gameOver = false;
+    this.currentPlayer = 0;
+
+    //Reset game end text
+    document.getElementById("winnerAnnouncement").textContent = "";
+  }
+
+  //Check if game is over
+  checkIfCanWin() {
+    //Check if there is a three in a row
+    for (let i = 0; i < 3; i++) {
+      //Check if there is a three in a row on a row
+      let row = gameManager.getGameBoard().board[i];
       if (
-        htmlBoard[0].children[0].textContent === opponentSymbol &&
-        htmlBoard[1].children[1].textContent === opponentSymbol &&
-        htmlBoard[2].children[2].textContent === ""
+        row[0].symbol != null &&
+        row[0].symbol === row[1].symbol &&
+        row[0].symbol === row[2].symbol
       ) {
-        return "22";
-      } else if (
-        htmlBoard[0].children[0].textContent === opponentSymbol &&
-        htmlBoard[1].children[1].textContent === "" &&
-        htmlBoard[2].children[2].textContent === opponentSymbol
-      ) {
-        return "11";
-      } else if (
-        htmlBoard[0].children[0].textContent === "" &&
-        htmlBoard[1].children[1].textContent === opponentSymbol &&
-        htmlBoard[2].children[2].textContent === opponentSymbol
-      ) {
-        return "00";
-      } else if (
-        htmlBoard[2].children[0].textContent === opponentSymbol &&
-        htmlBoard[1].children[1].textContent === opponentSymbol &&
-        htmlBoard[0].children[2].textContent === ""
-      ) {
-        return "02";
-      } else if (
-        htmlBoard[2].children[0].textContent === opponentSymbol &&
-        htmlBoard[1].children[1].textContent === "" &&
-        htmlBoard[0].children[2].textContent === opponentSymbol
-      ) {
-        return "11";
-      } else if (
-        htmlBoard[2].children[0].textContent === "" &&
-        htmlBoard[1].children[1].textContent === opponentSymbol &&
-        htmlBoard[0].children[2].textContent === opponentSymbol
-      ) {
-        return "20";
+        this.winner = gameManager.getPlayers()[this.currentPlayer];
+        this.gameOver = true;
+        gameManager.gameOver(this.winner);
       }
-    }
-  };
-  const countRow = () => {
-    let block;
-    block = countCycles(0, "R");
-    if (!block) {
-      block = countCycles(1, "R");
-    }
-    if (!block) {
-      block = countCycles(2, "R");
-    }
-    switch (block) {
-      case "NO":
-        blockMove = "NO";
-        break;
-      default:
-        blockMove = block;
-        break;
-    }
-  };
-  const countCol = () => {
-    let block;
-    block = countCycles(0, "C");
-    if (!block) {
-      block = countCycles(1, "C");
-    }
-    if (!block) {
-      block = countCycles(2, "C");
-    }
-    switch (block) {
-      case "NO":
-        blockMoveCol = "NO";
-        break;
-      default:
-        blockMoveCol = block;
-        break;
-    }
-  };
 
-  const countDia = () => {
-    let block;
-    block = countCycles(0, "D");
-    switch (block) {
-      case "NO":
-        blockMoveDia = "NO";
-        break;
-      default:
-        blockMoveDia = block;
-        break;
-    }
-  };
+      //Check if there is a three in a row on a column
+      let column = [
+        gameManager.getGameBoard().board[0][i],
+        gameManager.getGameBoard().board[1][i],
+        gameManager.getGameBoard().board[2][i],
+      ];
+      if (
+        column[0].symbol != null &&
+        column[0].symbol === column[1].symbol &&
+        column[0].symbol === column[2].symbol
+      ) {
+        this.winner = gameManager.getPlayers()[this.currentPlayer];
+        this.gameOver = true;
+        gameManager.gameOver(this.winner);
+      }
 
-  const findEmptyTile = (j, type) => {
-    if (type === "R") {
-      for (let i = 0; i < board.length; i++) {
-        if (htmlBoard[i].children[j].textContent === "") {
-          if (
-            `${i}${j}` === "00" ||
-            `${i}${j}` === "01" ||
-            `${i}${j}` === "02"
-          ) {
-            let holder = `${i}${j}`;
-            holder = holder.substring(1);
-            return holder;
-          } else return `${i}${j}`;
-        }
+      //Check if there is a three in a row on a diagonal
+      let diagonal = [
+        gameManager.getGameBoard().board[0][0],
+        gameManager.getGameBoard().board[1][1],
+        gameManager.getGameBoard().board[2][2],
+      ];
+      if (
+        diagonal[0].symbol != null &&
+        diagonal[0].symbol === diagonal[1].symbol &&
+        diagonal[0].symbol === diagonal[2].symbol
+      ) {
+        this.winner = gameManager.getPlayers()[this.currentPlayer];
+        this.gameOver = true;
+        gameManager.gameOver(this.winner);
       }
-    } else if (type === "C") {
-      for (let i = 0; i < board.length; i++) {
-        if (htmlBoard[j].children[i].textContent === "") {
-          if (
-            `${i}${j}` === "00" ||
-            `${i}${j}` === "01" ||
-            `${i}${j}` === "02"
-          ) {
-            let holder = `${i}${j}`;
-            holder = holder.substring(1);
-            return holder;
-          } else return `${i}${j}`;
-        }
-      }
-    }
-  };
-  const startAI = () => {
-    if (hasAISymbols === false) getSymbols();
-    setTimeout(() => {
-      logicAI();
-    }, 100);
-  };
-  const AIMovesSet = () => {
-    countRow();
-    countCol();
-    countDia();
-    if (
-      blockMoveDia !== "NO" &&
-      blockMoveDia !== undefined &&
-      blockMoveDia !== false
-    ) {
-      switch (blockMoveDia) {
-        case "00":
-          move(0, 0, friendlySymbol);
-          break;
-        case "20":
-          move(2, 0, friendlySymbol);
-          break;
-        case "02":
-          move(0, 2, friendlySymbol);
-          break;
-        case "22":
-          move(2, 2, friendlySymbol);
-          break;
-        case "11":
-          move(1, 1, friendlySymbol);
-          break;
-        default:
-          break;
-      }
-    } else if (
-      blockMoveCol !== "NO" &&
-      blockMoveCol !== undefined &&
-      blockMoveCol !== false
-    ) {
-      switch (blockMoveCol) {
-        case "0":
-          move(0, 0, friendlySymbol);
-          break;
-        case "10":
-          move(0, 1, friendlySymbol);
-          break;
-        case "20":
-          move(0, 2, friendlySymbol);
-          break;
-        case "1":
-          move(1, 0, friendlySymbol);
-          break;
-        case "11":
-          move(1, 1, friendlySymbol);
-          break;
-        case "21":
-          move(1, 2, friendlySymbol);
-          break;
-        case "2":
-          move(2, 0, friendlySymbol);
-          break;
-        case "12":
-          move(2, 1, friendlySymbol);
-          break;
-        case "22":
-          move(2, 2, friendlySymbol);
-          break;
-        default:
-          break;
-      }
-    } else if (
-      blockMove !== "NO" &&
-      blockMove !== undefined &&
-      blockMove !== false
-    ) {
-      switch (blockMove) {
-        case "0":
-          move(0, 0, friendlySymbol);
-          break;
-        case "10":
-          move(1, 0, friendlySymbol);
-          break;
-        case "20":
-          move(2, 0, friendlySymbol);
-          break;
-        case "1":
-          move(0, 1, friendlySymbol);
-          break;
-        case "11":
-          move(1, 1, friendlySymbol);
-          break;
-        case "21":
-          move(2, 1, friendlySymbol);
-          break;
-        case "2":
-          move(0, 2, friendlySymbol);
-          break;
-        case "12":
-          move(1, 2, friendlySymbol);
-          break;
-        case "22":
-          move(2, 2, friendlySymbol);
-          break;
-        default:
-          break;
-      }
-    } else if (htmlBoard[1].children[1].textContent === "") {
-      move(1, 1, friendlySymbol);
-    } else if (
-      htmlBoard[0].children[0].textContent === "" ||
-      htmlBoard[2].children[0].textContent === "" ||
-      htmlBoard[0].children[2].textContent === "" ||
-      htmlBoard[2].children[2].textContent === ""
-    ) {
-      let random = Math.floor(Math.random() * 4);
-      switch (random) {
-        case 0:
-          move(0, 0, friendlySymbol);
-          break;
-        case 1:
-          move(2, 0, friendlySymbol);
-          break;
-        case 2:
-          move(0, 2, friendlySymbol);
-          break;
-        case 3:
-          move(2, 2, friendlySymbol);
-          break;
-      }
-    } else if (
-      htmlBoard[1].children[0].textContent === "" ||
-      htmlBoard[0].children[1].textContent === "" ||
-      htmlBoard[1].children[2].textContent === "" ||
-      htmlBoard[2].children[1].textContent === ""
-    ) {
-      let random = Math.floor(Math.random() * 4);
-      switch (random) {
-        case 0:
-          move(1, 0, friendlySymbol);
-          break;
-        case 1:
-          move(0, 1, friendlySymbol);
-          break;
-        case 2:
-          move(1, 2, friendlySymbol);
-          break;
-        case 3:
-          move(2, 1, friendlySymbol);
-          break;
-      }
-    }
-  };
-  const logicAI = () => {
-    if (gameOver === false) {
-      if (AIgoesFirst) {
-        //goes first, always takes middle square
-        if (htmlBoard[1].children[1].textContent === "") {
-          move(1, 1, friendlySymbol);
-        } else AIMovesSet();
-      } else AIMovesSet();
-    }
-  };
 
-  return { startAI };
-})();
+      //Check if there is a three in a row on a diagonal
+      let diagonal2 = [
+        gameManager.getGameBoard().board[0][2],
+        gameManager.getGameBoard().board[1][1],
+        gameManager.getGameBoard().board[2][0],
+      ];
+      if (
+        diagonal2[0].symbol != null &&
+        diagonal2[0].symbol === diagonal2[1].symbol &&
+        diagonal2[0].symbol === diagonal2[2].symbol
+      ) {
+        this.winner = gameManager.getPlayers()[this.currentPlayer];
+        this.gameOver = true;
+        gameManager.gameOver(this.winner);
+      }
+    }
+  }
+}
 
-button.addEventListener("click", gameStarter.collectData);
+//Class for game board
+class GameBoard {
+  constructor() {
+    //Create board from cells with for loop
+    this.board = [];
+
+    for (let i = 0; i < 3; i++) {
+      this.board[i] = [];
+      for (let j = 0; j < 3; j++) {
+        this.board[i][j] = new BoardCell(i, j);
+      }
+    }
+  }
+
+  //Get Cell by position
+  getCell(i, j) {
+    return this.board[i][j];
+  }
+
+  //Reset game
+  resetGame() {
+    for (let i = 0; i < 3; i++) {
+      for (let j = 0; j < 3; j++) {
+        this.board[i][j].setSymbol(null);
+        this.board[i][j].cellElement.innerHTML = "";
+      }
+    }
+  }
+}
+
+//Class for board cell
+class BoardCell {
+  constructor(i, j) {
+    this.i = i;
+    this.j = j;
+
+    //Symbol on cell
+    this.symbol = null;
+
+    //Create cell element
+    this.cellElement = document.createElement("div");
+
+    //Set cell element class
+    this.cellElement.className = "boardFile";
+
+    //Set cell element id
+    this.cellElement.id = "cell" + i + j;
+
+    //Append cell element to game board
+    document.getElementById("gameBoard").appendChild(this.cellElement);
+
+    //Bind to click event
+    this.cellElement.addEventListener(
+      "click",
+      gameManager.getGameLogic().onClick.bind(gameManager.getGameLogic(), this)
+    );
+  }
+  getI() {
+    return this.i;
+  }
+  getJ() {
+    return this.j;
+  }
+
+  //Set symbol on cell
+  setSymbol(symbol) {
+    this.symbol = symbol;
+  }
+}
+
+//Base class for game user
+class Controller {
+  constructor(name, symbol) {
+    this.name = name;
+    this.symbol = symbol;
+  }
+
+  getName() {
+    return this.name;
+  }
+
+  getSymbol() {
+    return this.symbol;
+  }
+
+  //Handle player turn
+  handleTurn() {}
+}
+
+//Class for player which derives from game user
+class Player extends Controller {
+  constructor(name, symbol) {
+    super(name, symbol);
+
+    //Bind to click event
+    document
+      .getElementById("gameBoard")
+      .addEventListener("click", this.handleTurn.bind(this));
+  }
+}
+
+//Class for AI which derives from game user
+class AI extends Controller {
+  constructor(name, symbol) {
+    super(name, symbol);
+  }
+
+  startAI() {}
+
+  //Handle AI turn
+  handleAITurn() {}
+}
+
+let gameManager = new GameManager();

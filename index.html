@@ -33,29 +33,15 @@
                 <label for="AIfirst">Does AI go first?</label>
                 <input type="checkbox" id="AIfirst" name="firstAI" value=true checked>
             </div>
-            <button type="button" id="sentInfoData">PLAY</button>
+            <button type="button"  onclick="gameManager.startGame()" id="sentInfoData">PLAY</button>
         </div>
     </section>
-    <section class="gameBoard">
-        <div class="board">
-            <div id="1" class="boardFile"></div>
-            <div id="2" class="boardFile"></div>
-            <div id="3" class="boardFile"></div>
-        </div>
-        <div class="board">
-            <div id="4" class="boardFile"></div>
-            <div id="5" class="boardFile"></div>
-            <div id="6" class="boardFile"></div>
-        </div>
-        <div class="board">
-            <div id="7" class="boardFile"></div>
-            <div id="8" class="boardFile"></div>
-            <div id="9" class="boardFile"></div>
-        </div>
+    <section class="gameBoard" id="gameBoard">
+
     </section>
-    <section class="over">
+    <section class="over" id="over" >
         <p id="winnerAnnouncement"></p>
-        <button type="button" onclick="gameLogic.reset()" class="RESETbutton">Restart</button>
+        <button type="button" onclick="gameManager.resetGame()" class="RESETbutton">Restart</button>
     </section>
 </body>
 </html>
